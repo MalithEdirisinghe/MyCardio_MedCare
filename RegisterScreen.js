@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     container: {
         width: 430,
         height: 932,
-        backgroundColor: '#000',
+        backgroundColor: '#ffff',
         padding: 20,
     },
     title: {
