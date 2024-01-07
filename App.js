@@ -1,20 +1,89 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image } from 'react-native';
+import LoginScreen from './LoginScreen';
+import RegisterScreen from './RegisterScreen';
+import HomeScreen from './HomeScreen';
+import ProfileScreen from './ProfileScreen';
+import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import SplashScreen from './SplashScreen';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+
+const App = () => {
+  const HomeTabNavigator = () => (
+    <Tab.Navigator
+      screenOptions={{
+        tabBarStyle: {
+          backgroundColor: '#FF3939', // Set the background color to green
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={() => ({
+          tabBarIcon: () => (
+            <Image
+              source={require('./assets/HomeBlack.png')}
+              style={{ width: 35, height: 35 }}
+            />
+          ),
+          headerShown: false,
+          headerLeft: null, // Remove the back button
+        })}
+      />
+      {/* Add other Tab.Screen components here */}
+    </Tab.Navigator>
   );
-}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Splash" component={SplashScreen}
+          options={() => ({
+            headerShown: false,
+            headerLeft: null, // Remove the back button
+          })} />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={() => ({
+            headerShown: false,
+            headerLeft: null, // Remove the back button
+          })}
+        />
+        <Stack.Screen
+          name="Register"
+          component={RegisterScreen}
+          options={() => ({
+            headerShown: false,
+            headerLeft: null, // Remove the back button
+          })}
+        />
+
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={() => ({
+            headerShown: false,
+            headerLeft: null, // Remove the back button
+          })}
+        />
+
+        <Stack.Screen
+          name="Homes"
+          component={HomeTabNavigator}
+          options={() => ({
+            headerShown: false,
+            headerLeft: null, // Remove the back button
+          })}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
+export default App;
