@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ToastAndroid, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ToastAndroid, Image, ActivityIndicator } from 'react-native';
 import { auth } from './firebase';
 import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import * as SecureStore from 'expo-secure-store';
@@ -63,7 +63,7 @@ export default function LoginScreen({ navigation }) {
                 })
                 .catch(error => {
                     // Handle login errors (e.g., incorrect email or password)
-                    if (error.code === 'auth/invalid-login-credentials') {
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                         const value = "Incorrect Email or Password";
                         ToastAndroid.showWithGravityAndOffset(
                             value,
@@ -190,8 +190,12 @@ export default function LoginScreen({ navigation }) {
                             )}
                         </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                        <Text style={styles.loginButtonText}>Login</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+                        {loading ? (
+                            <ActivityIndicator size="small" color="#ffffff" />
+                        ) : (
+                            <Text style={styles.loginButtonText}>Login</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
                 <View style={styles.group18}>

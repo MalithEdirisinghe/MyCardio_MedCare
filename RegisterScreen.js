@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, ToastAndroid, Button, ScrollView } from 'react-native';
+import { Text, Image, TextInput, TouchableOpacity, StyleSheet, ToastAndroid, Button, ScrollView, ActivityIndicator } from 'react-native'; // Import ActivityIndicator
 import { auth, db, app } from './firebase';
 import { createUserWithEmailAndPassword, updateProfile, AuthErrorCodes } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -18,6 +18,7 @@ export default function SignupScreen({ navigation }) {
     const [imageUri, setImageUri] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
     const [showPassword1, setShowPassword1] = useState(false);
+    const [isLoading, setIsLoading] = useState(false); // State for loading indicator
 
     const handleSignup = async () => {
         if (!email || !Contact || !username || !password || !confirmPassword) {
@@ -39,6 +40,7 @@ export default function SignupScreen({ navigation }) {
                 50
             );
         } else {
+            setIsLoading(true); // Show loading indicator
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
@@ -81,6 +83,7 @@ export default function SignupScreen({ navigation }) {
                 navigation.navigate('Login');
 
             } catch (error) {
+                setIsLoading(false); // Hide loading indicator on error
                 if (error.code === AuthErrorCodes.EMAIL_EXISTS) {
                     const value = 'Email is already in use. Please use a different email.';
                     ToastAndroid.showWithGravityAndOffset(
@@ -95,6 +98,7 @@ export default function SignupScreen({ navigation }) {
                     setErrorMessage('An error occurred during signup. Please try again later.');
                 }
             }
+            setIsLoading(false); // Hide loading indicator after signup attempt
         }
     };
 
@@ -135,85 +139,86 @@ export default function SignupScreen({ navigation }) {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.title}>Create an Account</Text>
+            <Text style={styles.title}>Create an Account</Text>
 
-                {imageUri ? (
-                    <Image source={{ uri: imageUri }} style={styles.image} />
+            {imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.image} />
+            ) : (
+                <Image source={require('./assets/users.png')} style={styles.image} />
+            )}
+
+            <TouchableOpacity onPress={handleImageUpload}>
+                <Image source={require('./assets/camVector.png')} style={styles.camera} />
+            </TouchableOpacity>
+
+            <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={(text) => setEmail(text)}
+            />
+            <TextInput
+                style={styles.input}
+                placeholder="Username"
+                value={username}
+                onChangeText={(text) => setUsername(text)}
+            />
+            <TextInput
+                style={styles.input}
+                placeholder="Contact Number"
+                value={Contact}
+                onChangeText={(Number) => setContact(Number)}
+                keyboardType="number-pad"
+            />
+            <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry={!showPassword1}
+                value={password}
+                onChangeText={(text) => setPassword(text)}
+            />
+
+            <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                secureTextEntry={!showPassword}
+                value={confirmPassword}
+                onChangeText={(text) => setConfirmPassword(text)}
+            />
+            <TouchableOpacity style={styles.eyeIcon1} onPress={togglePasswordVisibility1}>
+                {showPassword1 ? (
+                    <Image
+                        source={require('./assets/eye.png')}
+                        style={{ width: 24, height: 24 }}
+                    />
                 ) : (
-                    <Image source={require('./assets/users.png')} style={styles.image} />
+                    <Image
+                        source={require('./assets/hide.png')}
+                        style={{ width: 24, height: 24 }}
+                    />
                 )}
-
-                <TouchableOpacity onPress={handleImageUpload}>
-                    <Image source={require('./assets/camVector.png')} style={styles.camera} />
-                </TouchableOpacity>
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={(text) => setEmail(text)}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Username"
-                    value={username}
-                    onChangeText={(text) => setUsername(text)}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Contact Number"
-                    value={Contact}
-                    onChangeText={(Number) => setContact(Number)}
-                    keyboardType="number-pad"
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    secureTextEntry={!showPassword1}
-                    value={password}
-                    onChangeText={(text) => setPassword(text)}
-                />
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Confirm Password"
-                    secureTextEntry={!showPassword}
-                    value={confirmPassword}
-                    onChangeText={(text) => setConfirmPassword(text)}
-                />
-                <TouchableOpacity style={styles.eyeIcon1} onPress={togglePasswordVisibility1}>
-                    {showPassword1 ? (
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.eyeIcon} onPress={togglePasswordVisibility}>
+                {showPassword ? (
                     <Image
                         source={require('./assets/eye.png')}
                         style={{ width: 24, height: 24 }}
                     />
-                    ) : (
-                        <Image
-                            source={require('./assets/hide.png')}
-                            style={{ width: 24, height: 24 }}
-                        />
-                    )}
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.eyeIcon} onPress={togglePasswordVisibility}>
-                    {showPassword ? (
+                ) : (
                     <Image
-                        source={require('./assets/eye.png')}
+                        source={require('./assets/hide.png')}
                         style={{ width: 24, height: 24 }}
                     />
-                    ) : (
-                        <Image
-                            source={require('./assets/hide.png')}
-                            style={{ width: 24, height: 24 }}
-                        />
-                    )}
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-                    <Text style={styles.signupButtonText}>Create Account</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.loginLink} onPress={handleLogin}>
-                    <Text style={styles.loginLinkText}>Already have an account? Login</Text>
-                </TouchableOpacity>
-                {<Text style={styles.errorMessage}>{errorMessage}</Text>}
+                )}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
+                <Text style={styles.signupButtonText}>Create Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.loginLink} onPress={handleLogin}>
+                <Text style={styles.loginLinkText}>Already have an account? Login</Text>
+            </TouchableOpacity>
+            {<Text style={styles.errorMessage}>{errorMessage}</Text>}
+            {isLoading && <ActivityIndicator size="large" color="#FF3939" />} 
         </ScrollView>
     );
 }

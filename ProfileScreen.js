@@ -1,197 +1,260 @@
-// import React, { useState } from 'react';
-// import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, ToastAndroid } from 'react-native';
+import { getAuth, updateProfile as updateAuthProfile, updateEmail as updateAuthEmail } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes, getStorage } from 'firebase/storage';
+import Constants from 'expo-constants';
+import * as ImagePicker from 'expo-image-picker';
+import { db, app } from './firebase';
 
-// const EditProfileScreen = () => {
-//     const [username, setUsername] = useState(''); 
-//     const [contact, setContact] = useState(''); 
+const UpdateProfileScreen = () => {
+    const [username, setUsername] = useState(null);
+    const [contact, setContact] = useState(null);
+    const [emails, setEmail] = useState(null);
+    const [profileImageUrl, setProfileImageUrl] = useState(null);
+    const [imageUri, setImageUri] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-//     // Function to handle the profile update
-//     const handleUpdateProfile = () => {
-//         // Implement the logic to update the user's profile details
-//         console.log('Updating profile:', { username, contact });
-//         // You may want to integrate this with your Firebase update logic
-//     };
-
-//     return (
-//         <View style={styles.container}>
-//             <Text style={styles.title}>Edit Profile</Text>
-
-//             {/* Input fields for editing profile details */}
-//             <TextInput
-//                 style={styles.input}
-//                 placeholder="Username"
-//                 value={username}
-//                 onChangeText={(text) => setUsername(text)}
-//             />
-//             <TextInput
-//                 style={styles.input}
-//                 placeholder="Contact Number"
-//                 value={contact}
-//                 onChangeText={(text) => setContact(text)}
-//                 keyboardType="number-pad"
-//             />
-
-//             {/* Button to update profile */}
-//             <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
-//                 <Text style={styles.buttonText}>Update Profile</Text>
-//             </TouchableOpacity>
-//         </View>
-//     );
-// };
-
-// const styles = StyleSheet.create({
-//     container: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         backgroundColor: '#ffffff',
-//     },
-//     title: {
-//         fontSize: 24,
-//         fontWeight: 'bold',
-//         marginBottom: 20,
-//     },
-//     input: {
-//         width: '80%',
-//         height: 40,
-//         borderColor: 'gray',
-//         borderWidth: 1,
-//         borderRadius: 5,
-//         paddingHorizontal: 10,
-//         marginVertical: 10,
-//     },
-//     button: {
-//         backgroundColor: '#5FFF9F',
-//         borderRadius: 5,
-//         paddingVertical: 15,
-//         paddingHorizontal: 30,
-//         marginTop: 20,
-//     },
-//     buttonText: {
-//         color: 'black',
-//         fontSize: 18,
-//     },
-// });
-
-// export default EditProfileScreen;
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Image, StyleSheet } from 'react-native';
-import firebase from 'firebase/app';
-import 'firebase/firestore';
-import 'firebase/storage';
-
-const EditProfileScreen = () => {
-    const [username, setUsername] = useState('');
-    const [contact, setContact] = useState('');
-    const [profileImage, setProfileImage] = useState(null);
-
-    useEffect(() => {
-        // Fetch user data from Firestore
-        const userId = 'YOUR_USER_ID'; // Replace with the actual user ID
-        const firestore = firebase.firestore();
-        const userRef = firestore.collection('users').doc(userId);
-
-        userRef.get().then((doc) => {
-            if (doc.exists) {
-                const userData = doc.data();
-                setUsername(userData.username);
-                setContact(userData.contact);
-
-                // Fetch profile image from Firebase Storage
-                const storage = firebase.storage();
-                const imageRef = storage.ref(`profileImages/${userId}.jpg`);
-
-                imageRef.getDownloadURL().then((url) => {
-                    setProfileImage(url);
-                }).catch((error) => {
-                    // Handle error fetching image
-                    console.error('Error fetching profile image:', error);
-                });
-            } else {
-                // Handle user not found
-                console.error('User not found');
-            }
-        }).catch((error) => {
-            // Handle error fetching user data
-            console.error('Error fetching user data:', error);
-        });
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        fetchData();
+        setRefreshing(false);
     }, []);
 
-    // Function to handle the profile update
-    const handleUpdateProfile = () => {
-        // Implement the logic to update the user's profile details
-        console.log('Updating profile:', { username, contact });
-        // You may want to integrate this with your Firebase update logic
+    const fetchData = async () => {
+        const user = getAuth().currentUser;
+        if (user) {
+            setUsername(user.displayName);
+            setEmail(user.email);
+
+            const storage = getStorage(app);
+            const storageRef = ref(storage, `user_images/${user.uid}.jpeg`);
+
+            try {
+                const url = await getDownloadURL(storageRef);
+                setProfileImageUrl(url);
+            } catch (error) {
+                console.error('Error fetching profile picture:', error);
+            }
+
+            const userRef = doc(db, 'users', user.uid);
+
+            try {
+                const docSnapshot = await getDoc(userRef);
+
+                if (docSnapshot.exists()) {
+                    setContact(docSnapshot.data().contactNumber);
+                } else {
+                    console.warn('Volunteer ID not found in Firestore for the user.');
+                }
+            } catch (error) {
+                console.error('Error fetching user document:', error);
+            }
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const updateProfile = async () => {
+        if (!contact || !username || !emails) {
+            const value = 'Please fill in all fields.';
+            ToastAndroid.showWithGravityAndOffset(
+                value,
+                ToastAndroid.SHORT,
+                ToastAndroid.BOTTOM,
+                25,
+                50
+            );
+            return;
+        }
+        setLoading(true);
+        const user = getAuth().currentUser;
+        console.log('Details', user);
+
+        try {
+            // Update Firestore data
+            const userRef = doc(db, 'users', user.uid);
+
+            const dataToUpdate = {};
+
+            if (imageUri) {
+                // If a new image is selected, upload it to storage
+                const storage = getStorage(app);
+                const storageRef = ref(storage, `user_images/${user.uid}.jpeg`);
+
+                // Upload the image
+                const response = await fetch(imageUri);
+                const blob = await response.blob();
+                await uploadBytes(storageRef, blob);
+
+                // Get the download URL of the uploaded image
+                const imageUrl = await getDownloadURL(storageRef);
+                dataToUpdate.profileImageUrl = imageUrl;
+            }
+
+            if (contact !== null) {
+                dataToUpdate.contactNumber = contact;
+            }
+
+            if (username !== null && user.displayName !== username) {
+                await updateAuthProfile(user, { displayName: username });
+            }
+
+            if (emails !== null && user.email !== emails) {
+                await updateAuthEmail(user, emails);
+                console.log("Email updated successfully. Verification email sent.");
+            }
+
+
+            await setDoc(userRef, dataToUpdate, { merge: true });
+
+            console.log('Profile updated successfully!');
+            const value = 'Profile updated successfully!';
+            ToastAndroid.showWithGravityAndOffset(
+                value,
+                ToastAndroid.SHORT,
+                ToastAndroid.BOTTOM,
+                25,
+                50
+            );
+        } catch (error) {
+            console.error('Error updating profile:', error);
+        } finally {
+            setLoading(false); // Set loading back to false, whether the update was successful or not
+        }
+    };
+
+
+    const handleImageUpload = async () => {
+        if (Constants.platform.android) {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                alert('Sorry, we need media library permissions to make this work!');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+            });
+
+            if (!result.canceled) {
+                setImageUri(result.assets[0].uri);
+                setProfileImageUrl(result.assets[0].uri);
+            } else {
+                console.log('Image selection canceled');
+            }
+        }
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Edit Profile</Text>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.contentContainer}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+            <View style={styles.container}>
+                <Text style={styles.option}>Profile</Text>
+                {profileImageUrl ? (
+                    <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
+                ) : (
+                    <Image source={require('./assets/users.png')} style={styles.profileImage} />
+                )}
 
-            {profileImage && <Image source={{ uri: profileImage }} style={styles.profileImage} />}
+                <TouchableOpacity onPress={handleImageUpload}>
+                    <Image source={require('./assets/camVector.png')} style={styles.camera} />
+                </TouchableOpacity>
+                <Text style={styles.texts}>Email:</Text>
+                <TextInput
+                    style={styles.input}
+                    value={emails}
+                    onChangeText={(text) => setEmail(text)}
+                />
+                <Text style={styles.texts}>Name:</Text>
+                <TextInput
+                    style={styles.input}
+                    value={username}
+                    onChangeText={(text) => setUsername(text)}
+                    placeholder="Enter your Name"
+                />
+                <Text style={styles.texts}>Contact No:</Text>
+                <TextInput
+                    style={styles.input}
+                    value={contact}
+                    onChangeText={(Number) => setContact(Number)}
+                    placeholder="Enter your Contact"
+                    keyboardType="number-pad"
+                />
+                {loading && (
+                    <ActivityIndicator size="large" color="#F81414" style={styles.loadingIndicator} />
+                )}
 
-            {/* Input fields for editing profile details */}
-            <TextInput
-                style={styles.input}
-                placeholder="Username"
-                value={username}
-                onChangeText={(text) => setUsername(text)}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Contact Number"
-                value={contact}
-                onChangeText={(text) => setContact(text)}
-                keyboardType="number-pad"
-            />
-
-            {/* Button to update profile */}
-            <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
-                <Text style={styles.buttonText}>Update Profile</Text>
-            </TouchableOpacity>
-        </View>
+                <TouchableOpacity style={styles.signupButton} onPress={updateProfile} disabled={loading}>
+                    <Text style={styles.signupButtonText}>Update Profile</Text>
+                </TouchableOpacity>
+            </View>
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
+        backgroundColor: '#EBB0B0',
+    },
+    contentContainer: {
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        backgroundColor: '#ffffff',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    profileImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        marginBottom: 20,
+        paddingTop: 100,
     },
     input: {
-        width: '80%',
         height: 40,
         borderColor: 'gray',
         borderWidth: 1,
         borderRadius: 5,
-        paddingHorizontal: 10,
-        marginVertical: 10,
+        margin: 10,
+        padding: 10,
+        width: 300,
     },
-    button: {
-        backgroundColor: '#5FFF9F',
+    signupButton: {
+        backgroundColor: '#F81414',
         borderRadius: 5,
         paddingVertical: 15,
-        paddingHorizontal: 30,
-        marginTop: 20,
+        alignItems: 'center',
+        marginVertical: 20,
     },
-    buttonText: {
-        color: 'black',
-        fontSize: 18,
+    signupButtonText: {
+        color: 'white',
+        fontSize: 15,
+        fontWeight: 'bold',
+    },
+    profileImage: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        top: -30,
+        left: 100,
+    },
+    texts: {
+        fontSize: 15,
+        fontWeight: 'bold',
+    },
+    camera: {
+        top: -145,
+        left: 200,
+    },
+    option: {
+        fontSize: 35,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        top: -50,
+        right: 0,
     },
 });
 
-export default EditProfileScreen;
+export default UpdateProfileScreen;

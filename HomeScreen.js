@@ -1,47 +1,88 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Modal, ScrollView, TouchableHighlight } from 'react-native';
 import { BackHandler } from 'react-native';
 import { getAuth, signOut } from 'firebase/auth';
 import { auth } from './firebase';
 import ConfirmationDialog from './ConfirmationDialog';
 
+const SupportDetailsModal = ({ isVisible, onClose }) => {
+    return (
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isVisible}
+            onRequestClose={onClose}
+        >
+            <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>About Us</Text>
+                    <ScrollView contentContainerStyle={styles.modalTextContainer}>
+                        <Text style={styles.modalText}>
+                            Welcome to [MyCardio MedCare] – your companion in postoperative care. 
+                            We're dedicated to supporting heart bypass patients on their journey to recovery. 
+                            With predictive analytics and personalized insights, 
+                            we're here to help you monitor surgical wound healing with ease and confidence. 
+                            Join us and experience peace of mind in your recovery process.
+                        </Text>
+                    </ScrollView>
+                    <TouchableHighlight style={styles.modalCloseButton} onPress={onClose}>
+                        <Text style={styles.modalCloseButtonText}>Close</Text>
+                    </TouchableHighlight>
+                </View>
+            </View>
+        </Modal>
+    );
+};
+
 const HomeScreen = ({ navigation }) => {
     const [username, setUsername] = useState(null);
     const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
-
+    const [showSupportDetails, setShowSupportDetails] = useState(false);
 
     useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            console.log('HomeScreen focused, refreshing data...');
 
-        const user = getAuth().currentUser;
+            const user = getAuth().currentUser;
 
-        if (user) {
-            setUsername(user.displayName);
-        }
-
-        const backAction = () => {
-            if (navigation.isFocused()) {
-                BackHandler.exitApp();
-                return true;
+            if (user) {
+                setUsername(user.displayName);
             }
-            return false;
-        };
 
-        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+            const backAction = () => {
+                if (navigation.isFocused()) {
+                    BackHandler.exitApp();
+                    return true;
+                }
+                return false;
+            };
 
+            const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+        });
+
+        return unsubscribe;
     }, [navigation]);
 
+
     const handleButtonPress = () => {
-        // Define the action to take when the button is pressed
-        // You can navigate to another screen or perform a specific action here
+        navigation.navigate('Predict');
     };
 
     const handleProfileButtonPress = () => {
         navigation.navigate('Profile');
     };
 
+    const handleAboutUsButtonPress = () => {
+        setShowSupportDetails(true);
+    };
+    const handleSupportDetailsClose = () => {
+        setShowSupportDetails(false);
+    };
+
     const handleLogoutButtonPress = () => {
         setShowConfirmationDialog(true);
     };
+
 
     const handleLogoutCancelled = () => {
         setShowConfirmationDialog(false);
@@ -57,6 +98,8 @@ const HomeScreen = ({ navigation }) => {
                 console.error('Error logging out:', error);
             });
     };
+
+    
 
     return (
         <View style={styles.container}>
@@ -85,11 +128,15 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.buttonAbout}
-                onPress={handleButtonPress}
+                onPress={handleAboutUsButtonPress}
             >
                 <Image source={require('./assets/aboutUs.png')} style={styles.vectorIconUs} />
                 <Text style={styles.buttonTextPredict}>About Us</Text>
             </TouchableOpacity>
+            <SupportDetailsModal
+                isVisible={showSupportDetails}
+                onClose={handleSupportDetailsClose}
+            />
             <TouchableOpacity
                 style={styles.buttonLogout}
                 onPress={handleLogoutButtonPress}
@@ -227,6 +274,51 @@ const styles = StyleSheet.create({
         top: 5,
         width: 40,
         height: 40,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 350,
+        borderRadius: 40,
+    },
+    modalContent: {
+        backgroundColor: "rgba(255, 134, 145, 1)",
+        borderTopLeftRadius: 40,
+        borderTopRightRadius: 40,
+        padding: 20,
+        borderRadius: 10,
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: 30,
+        fontWeight: "bold",
+        marginBottom: 10,
+        color: "black",
+    },
+    modalTextContainer: {
+        paddingBottom: 40,
+    },
+    modalText: {
+        fontSize: 20,
+        marginBottom: 10,
+        color: '#000',
+        fontWeight: '600',
+    },
+    modalCloseButton: {
+        height: 40,
+        borderColor: '#FF3939',
+        backgroundColor: '#FF3939',
+        borderWidth: 2,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 20,
+    },
+    modalCloseButtonText: {
+        color: "white",
+        fontSize: 20,
+        fontWeight: 'bold',
     },
 });
 
