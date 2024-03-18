@@ -33,7 +33,7 @@ const Predict = ({ navigation }) => {
         setRefreshing(false);
     }, []);
 
-    const TentProcess = () => {
+    const GetPredict = () => {
         if (
             age === '' ||
             sex === '' ||
@@ -211,7 +211,7 @@ const Predict = ({ navigation }) => {
                     </Picker>
                     
                 </View>
-                <TouchableOpacity style={styles.rectangle84} onPress={TentProcess}>
+                <TouchableOpacity style={styles.rectangle84} onPress={GetPredict}>
                     {isLoading && <ActivityIndicator size="large" color="#000" />}
                     <Text style={styles.processText}>Process</Text>
                 </TouchableOpacity>
