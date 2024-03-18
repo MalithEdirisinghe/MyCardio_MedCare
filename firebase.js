@@ -5,12 +5,12 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBu7WGxh3sOXmgmEWU7PWk-ehsyHRCPrTs",
-    authDomain: "medcare-9e485.firebaseapp.com",
-    projectId: "medcare-9e485",
-    storageBucket: "medcare-9e485.appspot.com",
-    messagingSenderId: "576144367855",
-    appId: "1:576144367855:web:fa446325f43306ff087b1a"
+    apiKey: "AIzaSyBQ205Feck1kc940z8q7RActby_xz7IPGk",
+    authDomain: "medcare-63b18.firebaseapp.com",
+    projectId: "medcare-63b18",
+    storageBucket: "medcare-63b18.appspot.com",
+    messagingSenderId: "1057524522978",
+    appId: "1:1057524522978:web:6dfa36b74f51b8933da3bb"
 };
 
 // Initialize Firebase if it's not already initialized
