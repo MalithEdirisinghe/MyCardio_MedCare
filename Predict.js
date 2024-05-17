@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, RefreshControl, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { Baseurl } from './components/baseUrl';
 
 const Predict = ({ navigation }) => {
     const [age, setAge] = useState('');
@@ -15,6 +16,7 @@ const Predict = ({ navigation }) => {
     const [round, setRound] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -63,8 +65,7 @@ const Predict = ({ navigation }) => {
                 "colour_around_the_wound": round
             };
 
-            // Make API request
-            fetch('https://WondHealAdmin.pythonanywhere.com/wondHeal', {
+            fetch(`${Baseurl}/wondHealPredict`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -212,8 +213,11 @@ const Predict = ({ navigation }) => {
                     
                 </View>
                 <TouchableOpacity style={styles.rectangle84} onPress={TentProcess}>
-                    {isLoading && <ActivityIndicator size="large" color="#000" />}
-                    <Text style={styles.processText}>Process</Text>
+                    {isLoading ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                            <Text style={styles.processText}>Process</Text>
+                    )}
                 </TouchableOpacity>
                 <View style={styles.rectangle93}></View>
             </View>
@@ -227,7 +231,7 @@ const styles = StyleSheet.create({
     },
     container: {
         position: 'relative',
-        width: 430,
+        width: 'auto',
         height: 1350,
         backgroundColor: '#FFFFFF',
     },
@@ -263,7 +267,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: '85%',
         height: 'auto',
-        left: '3%',
+        alignSelf: 'center',
         top: '20%',
         backgroundColor: '#FF3939',
         borderRadius: 10,

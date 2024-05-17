@@ -4,6 +4,11 @@ import RegisterScreen from './RegisterScreen';
 import HomeScreen from './HomeScreen';
 import ProfileScreen from './ProfileScreen';
 import Predict from './Predict';
+import UserForm from './UserForm';
+import ECGScreen from './ECGScreen';
+import StressPredict from './StressPredict';
+import MyComponent from './MyComponent';
+import PredictHomeScreen from './PredictHomeScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -47,13 +52,13 @@ const App = () => {
             />
           ),
           headerShown: false,
-          headerLeft: null, // Remove the back button
+          headerLeft: null,
         })}
       />
 
       <Tab.Screen
-        name="Predict"
-        component={Predict}
+        name="PredictHome"
+        component={PredictHomeScreen}
         options={() => ({
           tabBarIcon: () => (
             <Image
@@ -61,8 +66,7 @@ const App = () => {
               style={{ width: 25, height: 25 }}
             />
           ),
-          headerShown: false,
-          headerLeft: null, 
+          title: 'Get Predictions', headerTitleAlign: 'center', headerTintColor: '#ffff', headerStyle: { backgroundColor: '#FF3939' }
           // Remove the back button
         })}
         
@@ -91,6 +95,40 @@ const App = () => {
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
+          options={() => ({
+            headerShown: false,
+            headerLeft: null, // Remove the back button
+          })}
+        />
+        <Stack.Screen
+          name="UserForm"
+          component={UserForm}
+          options={() => ({
+            headerShown: false,
+            headerLeft: null, // Remove the back button
+          })}
+        />
+        <Stack.Screen
+          name="MyComp"
+          component={MyComponent}
+          options={() => ({
+            headerShown: false,
+            headerLeft: null, // Remove the back button
+          })}
+        />
+        <Stack.Screen
+          name="Stress"
+          component={StressPredict}
+          options={{ title: 'Stress Prediction', headerTitleAlign: 'center', headerTintColor: '#ffff', headerStyle: { backgroundColor: '#FF3939' } }}
+        />
+        <Stack.Screen
+          name="Predict"
+          component={Predict}
+          options={{ title: 'Wound Healing Stage Predictions', headerTitleAlign: 'center', headerTintColor: '#ffff', headerStyle: { backgroundColor: '#FF3939' } }}
+        />
+        <Stack.Screen
+          name="ECG"
+          component={ECGScreen}
           options={() => ({
             headerShown: false,
             headerLeft: null, // Remove the back button

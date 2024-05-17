@@ -65,11 +65,12 @@ const HomeScreen = ({ navigation }) => {
 
 
     const handleButtonPress = () => {
-        navigation.navigate('Predict');
+        navigation.navigate('PredictHome');
     };
 
     const handleProfileButtonPress = () => {
         navigation.navigate('Profile');
+        // navigation.navigate('UserForm');
     };
 
     const handleAboutUsButtonPress = () => {
@@ -157,25 +158,22 @@ const HomeScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#ffffff',
         borderTopColor: '#FF3939',
         borderTopWidth: 50,
+        width: 'auto',
+        height: '100%'
     },
     homePic: {
         position: 'relative',
         width: 430,
         height: 337,
-        left: 0,
-        top: -133,
     },
     welcomeText: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
-        top: -100,
     },
     button: {
         position: 'absolute',

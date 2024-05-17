@@ -40,7 +40,7 @@ export default function SignupScreen({ navigation }) {
                 50
             );
         } else {
-            setIsLoading(true); // Show loading indicator
+            setIsLoading(true);
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
